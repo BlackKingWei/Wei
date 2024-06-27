@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="api-key" content="YOUR_API_KEY">
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAya-ek96y0kgFMZsvSutcCdxCJKj9GKUE&libraries=places&callback=initMap" async defer></script>
+    <script type="module" src="function.js"></script>
+    <title>定位預約系統</title>
+</head>
+<body>
+    <header>
+        <div class="header-container">
+            <h1>定位預約系統</h1>
+            <div class="search-bar">
+                <input class="area" list="arealist" id="citySearch" placeholder="搜尋地點">
+                <datalist id="arealist">
+                    <!-- 城市選項 -->
+                    <option value="目前位置">目前位置</option>
+                    <option value="台北市">台北市</option>
+                    <option value="新北市">新北</option>
+                    <option value="基隆市">基隆市</option>
+                    <option value="桃園市">桃園市</option>
+                    <option value="新竹縣">新竹縣</option>
+                    <option value="新竹市">新竹市</option>
+                    <option value="苗栗縣">苗栗縣</option>
+                    <option value="台中市">台中市</option>
+                    <option value="彰化縣">彰化縣</option>
+                    <option value="南投縣">南投縣</option>
+                    <option value="雲林縣">雲林縣</option>
+                    <option value="嘉義縣">嘉義縣</option>
+                    <option value="嘉義市">嘉義市</option>
+                    <option value="台南市">台南市</option>
+                    <option value="高雄市">高雄市</option>
+                    <option value="屏東縣">屏東縣</option>
+                    <option value="宜蘭縣">宜蘭縣</option>
+                    <option value="花蓮縣">花蓮縣</option>
+                    <option value="台東縣">台東縣</option>
+                </datalist>
+                <input class="food" list="foodlist" id="foodSearch" placeholder="美食分類">
+                <datalist id="foodlist">
+                    <!-- 美食類型選項 -->
+                    <option value="所有餐廳">所有餐廳</option>
+                    <option value="火鍋">火鍋</option>
+                    <option value="早午餐">早午餐</option>
+                    <option value="小吃">小吃</option>
+                    <option value="餐酒館">餐酒館</option>
+                    <option value="酒吧">酒吧</option>
+                    <option value="精緻高級">精緻高級</option>
+                    <option value="約會餐廳">約會餐廳</option>
+                    <option value="甜點">甜點</option>
+                    <option value="燒烤">燒烤</option>
+                    <option value="日本料理">日本料理</option>
+                    <option value="居酒屋">居酒屋</option>
+                    <option value="義式料理">義式料理</option>
+                    <option value="中式料理">中式料理</option>
+                    <option value="韓式料理">韓式料理</option>
+                    <option value="泰式">泰式</option>
+                    <option value="吃到飽">吃到飽</option>
+                    <option value="和菜">和菜</option>
+                    <option value="牛排">牛排</option>
+                    <option value="咖啡">咖啡</option>
+                    <option value="素食">素食</option>
+                    <option value="寵物友善">寵物友善</option>
+                    <option value="拉麵">拉麵</option>
+                    <option value="咖哩">咖哩</option>
+                    <option value="下午茶">下午茶</option>
+                </datalist>
+                <button id="searchrestaurant">搜尋</button>
+            </div>
+            <div class="sort-bar">
+                <select id="sortOptions" >
+                    <option value="latest">最新餐廳</option>
+                    <option value="rating">評分最高</option>
+                    <option value="popular">最高人氣</option>
+                </select>
+            <div class="filter-bar">
+                <select id="priceFilter" >
+                    <option value="all">平均消費</option>
+                    <option value="0-150">150以內</option>
+                    <option value="150-600">150~600</option>
+                    <option value="600-1200">600~1200</option>
+                    <option value="1200+">1200以上</option>
+                </select>
+                <input type="checkbox" id="openNow" name="openNow">
+                <label for="openNow">營業中</label>
+                <input type="checkbox" id="takeout" name="takeout">
+                <label for="takeout">外帶外送</label>
+            </div>    
+        </div>
+    </header>
+    <main>
+        <aside id="restaurantlist" style="width: 30%;"> <!-- 餐廳列表 -->
+            <!-- 餐廳列表內容 -->
+            
+        </aside>
+        <!-- <aside id="restaurantReviews" style="width: 30%;"></aside> -->
+        <section id="restaurantDetails">
+            <button id="hide">X</button>
+            <div id="detailsContent"><!-- 動態內容將放在這裡 --></div>
+        </section>
+        <section id="map" style="width: 70%;"> <!-- 地圖 -->
+            <!-- 地圖內容 -->
+        </section>
+    </main>
+</body>
+</html>
