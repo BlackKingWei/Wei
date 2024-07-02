@@ -90,3 +90,7 @@ main {
 .map-expanded {
     width: 45%;
 }
+
+#searchrestaurant{
+    display: none;
+}

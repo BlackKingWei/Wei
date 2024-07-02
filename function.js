@@ -8,6 +8,8 @@ let currentMarker = null;
 let currentInfoWindow = null;
 let cityLocation = null;
 let markers = [];
+
+
 function initMap() {
     map = new google.maps.Map(document.getElementById("map"), {
         center: { lat: 23.58, lng: 120.58 },
@@ -23,7 +25,7 @@ function initMap() {
     google.maps.event.addListenerOnce(map, 'idle', function () {
         initializePlacesService();
     });
-    
+    getCoordinates('台北市', 'restaurant', null, null);
 }
 async function getCurrentPosition() {
     return new Promise((resolve, reject) => {
@@ -170,12 +172,12 @@ document.getElementById('foodSearch').addEventListener('input', async function(e
     const priceFilter = document.getElementById('priceFilter').value;
     const openNow = document.getElementById('openNow').checked;
     const takeout = document.getElementById('takeout').checked;
-        resetLayout();
-
-    // const city = document.getElementById('citySearch').value; // 確保 city 變數已定義
+    resetLayout();
 
     clearRestaurantList();
     clearMarkers();
+    
+ 
     if (food) {  // 确保 food 不为空
         if (cityLocation) {  // 如果选择了城市
             await getfood(cityLocation, food, sortOption, priceFilter, openNow, takeout);
@@ -273,6 +275,23 @@ async function getfood(location, food, sortOption, priceFilter, openNow, takeout
                 resultsDiv.innerHTML = '';
                 results.forEach(place => {
                     createRestaurantMarker(place, map, new google.maps.LatLngBounds());
+                });
+
+
+                const directionsService = new google.maps.DirectionsService();
+                const directionsRenderer = new google.maps.DirectionsRenderer();
+                directionsRenderer.setMap(map); // 將路線顯示在地圖上
+                const routeRequest = {
+                    origin: cityLocation, // 起點
+                    destination: results[0].geometry.location, // 終點，假設為搜尋結果的第一個地點
+                    travelMode: google.maps.TravelMode.DRIVING // 旅行模式
+                };
+                directionsService.route(routeRequest, (response, status) => {
+                    if (status === google.maps.DirectionsStatus.OK) {
+                        directionsRenderer.setDirections(response);
+                    } else {
+                        console.error('Directions request failed due to ', status);
+                    }
                 });
             } else {
                 console.error('Places API error:', status);
