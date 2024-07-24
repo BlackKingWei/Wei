@@ -8,8 +8,8 @@ let currentMarker = null;
 let currentInfoWindow = null;
 let cityLocation = null;
 let markers = [];
-
-
+let city=null;
+let food=null;
 function initMap() {
     map = new google.maps.Map(document.getElementById("map"), {
         center: { lat: 23.58, lng: 120.58 },
@@ -25,35 +25,47 @@ function initMap() {
     google.maps.event.addListenerOnce(map, 'idle', function () {
         initializePlacesService();
     });
-    getCoordinates('台北市', 'restaurant', null, null);
+    getCoordinates('', 'restaurant', null, null);
 }
+
 async function getCurrentPosition() {
     return new Promise((resolve, reject) => {
         navigator.geolocation.getCurrentPosition(resolve, reject);
     });
 }
+
 document.getElementById('citySearch').addEventListener('input', async function(e) {
-    var city = e.target.value;
+    city = e.target.value;
+    const geocoder = new google.maps.Geocoder();
     const food = document.getElementById('foodSearch').value||'';
     const sortOption = document.getElementById('sortOptions').value||'';
     const priceFilter = document.getElementById('priceFilter').value||'';
+    const openNow = document.getElementById('openNow').checked;
+    const takeout = document.getElementById('takeout').checked;
+    let location = null;
     console.log(city);
     resetLayout();
-    console.log(city, food, sortOption, priceFilter);  // 打印所有变量以确保它们都已被正确获取
+    console.log(city, food, sortOption, priceFilter); 
     map.setCenter(city);
     map.setZoom(14);
-    if (city) {  // 确保 city 不为空
-        clearMarkers();
-        await getCoordinates(city, food, sortOption, priceFilter).then(location => {
-            if (location) {
-                map.setCenter(location);
-                map.setZoom(14);
-            }
-        });
-    } else {
-        console.error("No city provided");
+    if(food){
+        
+        await getfood(cityLocation, food, sortOption, priceFilter, openNow, takeout);
+    }else{
+        if (city) {  // 确保 city 不为空
+            clearMarkers();
+            await getCoordinates(city, food, sortOption, priceFilter).then(location => {
+                if (location) {
+                    map.setCenter(location);
+                    map.setZoom(14);
+                }
+            });
+        } else {
+            console.error("No city provided");
+        }
     }
 });
+
 document.getElementById('openNow').addEventListener('change', async function() {
     const city = document.getElementById('citySearch').value||'';
     const food = document.getElementById('foodSearch').value||'';
@@ -88,7 +100,7 @@ document.getElementById('priceFilter').addEventListener('change', async function
     await getfood(city, food, null, priceFilter);
 });
 
-async function getCoordinates(city, food, sortOption, priceFilter) {
+async function getCoordinates(city, food='', sortOption, priceFilter) {
     try {
         const geocoder = new google.maps.Geocoder();
         const openNow = document.getElementById('openNow').checked;
@@ -127,7 +139,6 @@ async function getCoordinates(city, food, sortOption, priceFilter) {
                 return;
             }
         }
-
         
             const request = {
                 location: new google.maps.LatLng(location.lat, location.lng),
@@ -167,65 +178,71 @@ async function getCoordinates(city, food, sortOption, priceFilter) {
 
 
 document.getElementById('foodSearch').addEventListener('input', async function(e) {
-    var food = e.target.value;
+    
     const sortOption = document.getElementById('sortOptions').value;
     const priceFilter = document.getElementById('priceFilter').value;
     const openNow = document.getElementById('openNow').checked;
     const takeout = document.getElementById('takeout').checked;
     resetLayout();
-
+    console.log(city);
     clearRestaurantList();
     clearMarkers();
-    
- 
-    if (food) {  // 确保 food 不为空
-        if (cityLocation) {  // 如果选择了城市
-            await getfood(cityLocation, food, sortOption, priceFilter, openNow, takeout);
-        } else {  // 未选择城市，使用全台湾边界
-            const taiwanBounds = {
-                northeast: { lat: 25.3, lng: 122 },
-                southwest: { lat: 21.8, lng: 119.5 }
-            };
-            await getfood(taiwanBounds, food, sortOption, priceFilter, openNow, takeout);
-        }
-    } else {
-        console.error("No food provided");
+    if(city === null)
+    {
+        const foodInput = document.getElementById('foodSearch');
+        foodInput.value = ''; // 清空输入框的值
+       
+        alert("請選擇城市");
     }
-    if (cityLocation && isFinite(cityLocation.lat) && isFinite(cityLocation.lng)) {
-        const mapOptions = {
-            center: { lat: cityLocation.lat, lng: cityLocation.lng },
-            zoom: 15
-        };
-        const map = new google.maps.Map(document.getElementById('map'), mapOptions);
-
-        const request = {
-            location: new google.maps.LatLng(cityLocation.lat, cityLocation.lng),
-            radius: '500',
-            query: food|| 'restaurant',
-            openNow: openNow,
-        };
-
-        placesService.textSearch(request, (results, status) => {
-            if (status === google.maps.places.PlacesServiceStatus.OK) {
-                if (priceFilter) {
-                    results = filterByPrice(results, priceFilter);
-                }
-                if (sortOption) {
-                    results = sortResults(results, sortOption);
-                }
-                if (takeout) {
-                    results = results.filter(place => place.types.includes('meal_takeaway'));
-                }
-                const resultsDiv = document.getElementById('restaurantlist');
-                resultsDiv.innerHTML = '';
-                results.forEach(place => {
-                    createRestaurantMarker(place, map, new google.maps.LatLngBounds());
-                });
-            } else {
-                console.error('Places API error:', status);
+    else{
+        food = e.target.value;
+        if (food) {  // 确保 food 不为空
+            if (cityLocation) {  // 如果选择了城市
+                await getfood(cityLocation, food, sortOption, priceFilter, openNow, takeout);
+            } else {  // 未选择城市，使用全台湾边界
+                const taiwanBounds = {
+                    northeast: { lat: 25.3, lng: 122 },
+                    southwest: { lat: 21.8, lng: 119.5 }
+                };
+                await getfood(taiwanBounds, food, sortOption, priceFilter, openNow, takeout);
             }
-    })};
-    
+        } else {
+            console.error("No food provided");
+        }
+        if (cityLocation && isFinite(cityLocation.lat) && isFinite(cityLocation.lng)) {
+            const mapOptions = {
+                center: { lat: cityLocation.lat, lng: cityLocation.lng },
+                zoom: 15
+            };
+            const map = new google.maps.Map(document.getElementById('map'), mapOptions);
+
+            const request = {
+                location: new google.maps.LatLng(cityLocation.lat, cityLocation.lng),
+                radius: '500',
+                query: food|| 'restaurant',
+                openNow: openNow,
+            };
+
+            placesService.textSearch(request, (results, status) => {
+                if (status === google.maps.places.PlacesServiceStatus.OK) {
+                    if (priceFilter) {
+                        results = filterByPrice(results, priceFilter);
+                    }
+                    if (sortOption) {
+                        results = sortResults(results, sortOption);
+                    }
+                    if (takeout) {
+                        results = results.filter(place => place.types.includes('meal_takeaway'));
+                    }
+                    const resultsDiv = document.getElementById('restaurantlist');
+                    resultsDiv.innerHTML = '';
+                    results.forEach(place => createRestaurantMarker(place, map, new google.maps.LatLngBounds()));
+
+                } else {
+                    console.error('Places API error:', status);
+                }
+        })};
+    }
 });
 
 
@@ -233,14 +250,15 @@ document.getElementById('foodSearch').addEventListener('input', async function(e
 async function getfood(location, food, sortOption, priceFilter, openNow, takeout) {
     try {
         let request;
-        const cityLocation = await getCoordinates(selectedCity);  // 獲取城市的座標
-        if (cityLocation && isFinite(cityLocation.lat) && isFinite(cityLocation.lng)) {
-                map.setCenter(cityLocation);  // 將地圖中心設置為城市座標
-            } else {
-            console.error('Invalid city location: ', cityLocation);
-            }
-        if (selectedCity) {  // 如果選擇了城市
-            const cityLocation = await getCoordinates(selectedCity);  // 獲取城市的座標
+        let cityLocation = null;  // 獲取城市的座標
+        // if (cityLocation && isFinite(cityLocation.lat) && isFinite(cityLocation.lng)) {
+        //         map.setCenter(cityLocation);  // 將地圖中心設置為城市座標
+        //     } else {
+        //     console.error('Invalid city location: ', cityLocation);
+        //     }
+    
+        if (city) {  // 如果選擇了城市
+            cityLocation = await getCoordinates(city);            
             map.setCenter(cityLocation);
             map.setZoom(14);
             request = {
@@ -259,7 +277,7 @@ async function getfood(location, food, sortOption, priceFilter, openNow, takeout
                 openNow: openNow,
             };
         } 
-
+        
         placesService.textSearch(request, (results, status) => {
             if (status === google.maps.places.PlacesServiceStatus.OK) {
                 if (priceFilter) {
@@ -273,9 +291,7 @@ async function getfood(location, food, sortOption, priceFilter, openNow, takeout
                 }
                 const resultsDiv = document.getElementById('restaurantlist');
                 resultsDiv.innerHTML = '';
-                results.forEach(place => {
-                    createRestaurantMarker(place, map, new google.maps.LatLngBounds());
-                });
+                results.forEach(place => createRestaurantMarker(place, map, new google.maps.LatLngBounds()));
 
 
                 const directionsService = new google.maps.DirectionsService();
@@ -378,6 +394,7 @@ function searchNearbyRestaurants( lat, lng) {
     });
     console.log('Results:', results);
 }
+
 console.log(document.getElementById('priceFilter').value);  // 检查是否可以获取到值
 
 function createRestaurantMarker(place, map, bounds) {
@@ -414,6 +431,7 @@ function createRestaurantMarker(place, map, bounds) {
 
     console.log("Added restaurant: " + place.name);
 }
+
 
   // 新函数用于打开信息窗口并展示地点信息
 function showInfoWindow(place, marker) {
@@ -609,12 +627,14 @@ function clearRestaurantList() {
     const review = document.getElementById('detailsContent');
     review.innerHTML = '';
 }
+
 function clearMarkers() {
     for (let i = 0; i < markers.length; i++) {
         markers[i].setMap(null);
     }
     markers = [];
 }
+
 function displayRestaurantDetails(place) {
     const mapElement = document.getElementById('map');
     const detailsElement = document.getElementById('detailsContent');
@@ -625,12 +645,12 @@ function displayRestaurantDetails(place) {
         <p>地址: ${place.vicinity}</p>
         <p>星級: ${place.rating}</p>
     `;
-    
     // 调整布局
     mapElement.classList.add('shrink');
     detailsElement.classList.add('expand');
     detailsElement.style.display = 'block';
 }
+
 function resetLayout() {
     const mapElement = document.getElementById('map');
     const detailsElement = document.getElementById('detailsContent');
@@ -648,6 +668,7 @@ function toggleRestaurantDetails() {
         detailsSection.style.display = 'none';
     }
 }
+
 function showRestaurantDetails() {
     const detailsElement = document.getElementById('detailsContent');
     const mapElement = document.getElementById('map');
@@ -663,7 +684,7 @@ function showRestaurantDetails() {
     detailsElement.style.width = '30%';
     listElement.style.width = '30%';
 }
-// 在 function.js 中
+
 window.addEventListener('load', () => {
     const hideButton = document.querySelector('#restaurantDetails button');
     hideButton.addEventListener('click', hideRestaurantDetails);
@@ -680,5 +701,3 @@ function hideRestaurantDetails() {
     listElement.style.width = '30%';
 }
 
-// 添加事件監聽，例如點擊餐廳名稱時調用showRestaurantDetails()
-// 您可能需要在添加餐廳列表項目時動態綁定這些事件
