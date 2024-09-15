@@ -1,3 +1,5 @@
+//const { text } = require("express");
+
 let map;
 let placesService;
 let results = [];
@@ -10,6 +12,36 @@ let cityLocation = null;
 let markers = [];
 let city=null;
 let food=null;
+let foodlist=['火鍋','早午餐','小吃','餐酒館','酒吧','精緻高級','約會餐廳','甜點','燒烤','日本料理','居酒屋','義式料理','中式料理','韓式料理','泰式','吃到飽','和菜','牛排','咖啡','素食',
+    '寵物友善','拉麵','咖哩','下午茶'];
+
+const colors = ['#eae56f','#89f26e','#7de6ef','#e7706f'];
+
+const wheel = new Winwheel({
+    numSegments:foodlist.length,
+    segments:foodlist.map((food,index)=>{
+        return{
+            fillStyle:colors[index%4],
+            text:food,
+            strokeStyle:'white',
+            textFontSize: 24, // 设置字体大小
+            textFillStyle: 'black' // 设置字体颜色
+        }
+    }),
+    animation: {
+        type: 'spinToStop',  // 設置動畫類型
+        duration: 5,         // 動畫持續時間
+        spins: 8,             // 轉多少圈
+        easing:'Power4.easeInOut',
+        callbackFinished: function(segments){
+            document.getElementById('wheel').style.display = 'none';
+            wheel.rotationAngle = 0;
+            wheel.draw();
+            window.alert(segments.text)
+        }
+    }
+})
+
 function initMap() {
     map = new google.maps.Map(document.getElementById("map"), {
         center: { lat: 23.58, lng: 120.58 },
@@ -368,8 +400,8 @@ function handleLocationError(browserHasGeolocation, pos) {
     map.setCenter(pos);
 }
 
-window.initMap = initMap;
 
+window.initMap = initMap;
 function searchNearbyRestaurants( lat, lng) {
     clearRestaurantList();
     var location = new google.maps.LatLng(lat, lng);
@@ -701,3 +733,7 @@ function hideRestaurantDetails() {
     listElement.style.width = '30%';
 }
 
+document.getElementById('draw').addEventListener('click',function(){
+        document.getElementById('wheel').style.display= 'block';
+        wheel.startAnimation();
+})

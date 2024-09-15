@@ -5,8 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="api-key" content="YOUR_API_KEY">
     <link rel="stylesheet" href="styles.css">
-    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAya-ek96y0kgFMZsvSutcCdxCJKj9GKUE&libraries=places&callback=initMap" async defer></script>
+    <script  src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAya-ek96y0kgFMZsvSutcCdxCJKj9GKUE&libraries=places&callback=initMap"async defer ></script>
     <script type="module" src="function.js"></script>
+    <script src="./Winwheel.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/2.1.3/TweenMax.min.js"></script>
     <title>定位預約系統</title>
 </head>
 <body>
@@ -87,8 +89,32 @@
                 <label for="openNow">營業中</label>
                 <input type="checkbox" id="takeout" name="takeout">
                 <label for="takeout">外帶外送</label>
-            </div>    
+            </div> 
+            <button id="draw">抽籤</button>
+
+            <div id="wheel" 
+                style="
+                position: fixed; 
+                top: 0;
+                left: 0;
+                width: 100vw;
+                height: 100vh;
+                background-color: rgba(0,0,0,0.3);
+                display: none;">
+                <canvas 
+                    id="canvas" 
+                    width="600" 
+                    height="600" 
+                    style=
+                    "position: absolute;
+                    left: 50%;
+                    top: 50%;
+                    transform: translate(-50%,-50%);"
+                ></canvas>
+            </div>   
         </div>
+        
+
     </header>
     <main>
         <aside id="restaurantlist" style="width: 30%;"> <!-- 餐廳列表 -->
@@ -104,5 +130,6 @@
             <!-- 地圖內容 -->
         </section>
     </main>
+    
 </body>
 </html>
