@@ -94,3 +94,6 @@ main {
 #searchrestaurant{
     display: none;
 }
+#wheel {
+    z-index: 1000;
+}
