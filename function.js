@@ -1,19 +1,22 @@
 //const { text } = require("express");
-
+let cachedCityLocation = null;
 let map;
 let placesService;
 let results = [];
-let directionsRenderer;
+let directionsRenderer ;
 let directionsService;
 let currentDirections = null;
 let currentMarker = null;
 let currentInfoWindow = null;
 let cityLocation = null;
 let markers = [];
+let sortOption=null;
 let city=null;
 let food=null;
 let foodlist=['火鍋','早午餐','小吃','餐酒館','酒吧','精緻高級','約會餐廳','甜點','燒烤','日本料理','居酒屋','義式料理','中式料理','韓式料理','泰式','吃到飽','和菜','牛排','咖啡','素食',
     '寵物友善','拉麵','咖哩','下午茶'];
+
+let userLocation = null;
 
 const colors = ['#eae56f','#89f26e','#7de6ef','#e7706f'];
 
@@ -41,7 +44,12 @@ const wheel = new Winwheel({
         }
     }
 })
-
+// async function getUserLocation() {
+//     if (!userLocation) {
+//         userLocation = await getCurrentPosition();
+//     }
+//     return userLocation;
+// }
 function initMap() {
     map = new google.maps.Map(document.getElementById("map"), {
         center: { lat: 23.58, lng: 120.58 },
@@ -120,6 +128,7 @@ document.getElementById('sortOptions').addEventListener('change', async function
     const sortOption = e.target.value;
     const food = document.getElementById('foodSearch').value||'';
     const city = document.getElementById('citySearch').value||'';
+    const priceFilter = document.getElementById('priceFilter').value || '';  
     await getCoordinates(city,food,sortOption,priceFilter);
     await getfood(city, food, sortOption,priceFilter);
 });
@@ -128,11 +137,12 @@ document.getElementById('priceFilter').addEventListener('change', async function
     const priceFilter = e.target.value;
     const food = document.getElementById('foodSearch').value||'';
     const city = document.getElementById('citySearch').value||'';
-    await getCoordinates(city,food,null,priceFilter);
-    await getfood(city, food, null, priceFilter);
+    const sortOption = document.getElementById('sortOptions').value||'';
+    await getCoordinates(city,food,sortOption,priceFilter);
+    await getfood(city, food, sortOption, priceFilter);
 });
 
-async function getCoordinates(city, food='', sortOption, priceFilter) {
+ async function getCoordinates(city, food='', sortOption, priceFilter) {
     try {
         const geocoder = new google.maps.Geocoder();
         const openNow = document.getElementById('openNow').checked;
@@ -207,12 +217,51 @@ async function getCoordinates(city, food='', sortOption, priceFilter) {
         console.error("Error fetching coordinates: ", error);
     }
 }
+function updateRoute(origin, destination) {
+    const directionsService = new google.maps.DirectionsService();
+    directionsRenderer.setMap(map);  // 在地图上显示路线
 
+    const routeRequest = {
+        origin: origin,
+        destination: destination,
+        travelMode: google.maps.TravelMode.DRIVING
+    };
+
+    directionsService.route(routeRequest, (response, status) => {
+        if (status === 'OK') {
+            directionsRenderer.setDirections(response);
+        } else {
+            console.error('Directions request failed due to ', status);
+        }
+    });
+}
+
+async function getCityLocation(city) {
+    if (cachedCityLocation && city === previousCity) {
+        return cachedCityLocation;
+    }
+    cachedCityLocation = await getCoordinates(city);
+    return cachedCityLocation;
+}
+function applyFiltersAndSorting(results, priceFilter, sortOption, takeout) {
+    if (priceFilter) {
+        results = filterByPrice(results, priceFilter);
+    }
+    if (sortOption) {
+        results = sortResults(results, sortOption);
+    }
+    if (takeout) {
+        results = results.filter(place => place.types.includes('meal_takeaway'));
+    }
+    return results;
+}
+
+results = applyFiltersAndSorting(results, priceFilter, sortOption, takeout);
 
 document.getElementById('foodSearch').addEventListener('input', async function(e) {
     
-    const sortOption = document.getElementById('sortOptions').value;
-    const priceFilter = document.getElementById('priceFilter').value;
+    const sortOption = document.getElementById('sortOptions').value||'';
+    const priceFilter = document.getElementById('priceFilter').value||'';
     const openNow = document.getElementById('openNow').checked;
     const takeout = document.getElementById('takeout').checked;
     resetLayout();
@@ -279,7 +328,7 @@ document.getElementById('foodSearch').addEventListener('input', async function(e
 
 
 
-async function getfood(location, food, sortOption, priceFilter, openNow, takeout) {
+ async function getfood(location, food, sortOption, priceFilter, openNow, takeout) {
     try {
         let request;
         let cityLocation = null;  // 獲取城市的座標
@@ -288,7 +337,7 @@ async function getfood(location, food, sortOption, priceFilter, openNow, takeout
         //     } else {
         //     console.error('Invalid city location: ', cityLocation);
         //     }
-    
+        
         if (city) {  // 如果選擇了城市
             cityLocation = await getCoordinates(city);            
             map.setCenter(cityLocation);
@@ -401,7 +450,8 @@ function handleLocationError(browserHasGeolocation, pos) {
 }
 
 
-window.initMap = initMap;
+
+
 function searchNearbyRestaurants( lat, lng) {
     clearRestaurantList();
     var location = new google.maps.LatLng(lat, lng);
@@ -560,19 +610,19 @@ function calculateAndDisplayRoute(place) {
     if (currentDirections) {
         currentDirections.setMap(null); // 清除旧的路线
     }
-
+    console.log(123);
     // 使用當前用戶位置作為起點
     if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
             (position) => {
                 const userLocation = new google.maps.LatLng(position.coords.latitude, position.coords.longitude);
-
+                console.log(userLocation);
                 const request = {
                     origin: userLocation,
                     destination: place.geometry.location, // 餐廳位置
                     travelMode: 'DRIVING' // 駕駛模式，可以根據需要更改
                 };
-
+                console.log(456);
                 // 使用 Directions Service 規劃路線
                 directionsService.route(request, function (response, status) {
                     if (status === 'OK') {
@@ -582,8 +632,11 @@ function calculateAndDisplayRoute(place) {
                         }
                         currentDirections.setMap(map);
                         currentDirections.setDirections(response);
+                        console.log(map);
+                        console.log(789);
                     } else {
                         window.alert('Directions request failed due to ' + status);
+                        console.log(0);
                     }
                 });
             },
@@ -609,12 +662,10 @@ function showRestaurantReviews(placeId, marker) {
         console.error("No place ID provided");
         return;
     }
-
     const request = {
         placeId: placeId,
         fields: ['name', 'vicinity', 'rating', 'reviews','photos']
     };
-
     placesService.getDetails(request, (place, status) => {
         if (status === google.maps.places.PlacesServiceStatus.OK) {
             const reviewsContainer = document.getElementById("detailsContent");
@@ -737,3 +788,10 @@ document.getElementById('draw').addEventListener('click',function(){
         document.getElementById('wheel').style.display= 'block';
         wheel.startAnimation();
 })
+function handleError(message) {
+    const errorDiv = document.getElementById('errorMessage');
+    errorDiv.textContent = message;
+    errorDiv.style.display = 'block';
+}
+
+window.initMap = initMap();
